@@ -10,8 +10,8 @@ let registerUser = errorHandler(async (req, res, next) => {
     throw new Error("Ma'lumotlar to'liq emas");
   }
   let [existUser, existUserEmail] = await Promise.all([
-    User.find({ username: username }),
-    User.find({ email: email }),
+    User.find({ username }),
+    User.find({ email }),
   ]);
   if (existUser.length || existUserEmail.length) {
     throw new Error(
@@ -24,4 +24,49 @@ let registerUser = errorHandler(async (req, res, next) => {
     message: "Siz muvaffaqiyat ro'yxatdan o'tdingiz",
     user,
   });
+});
+
+let login = errorHandler(async (req, res, next) => {
+  let { username, password } = req.body;
+  if (!username || !password)
+    throw new Error("username yoki password berilmagan");
+  let user = await User.findOne({ username })
+    .select("password username email name role")
+    .exec();
+  if (!user) throw new Error("Siz oldin ro'yxat o'tmagansiz ");
+
+  console.log(req.body);
+
+  let checking = await bcrypt.compare(password, user.password);
+  if (!checking) throw new Error("password xato kiritilgan berilmagan");
+  console.log(user.password, checking);
+  user.password = password;
+  let token = await jwt.sign(
+    { id: user.id, role: user.role },
+    process.env.JWT_TOKEN_SECRET_KEY,
+    { expiresIn: process.env.JWT_EXP_TIME }
+  );
+
+  console.log(eval(process.env.JWT_REFRESH_EXP_TIME));
+
+  let refreshToken = await jwt.sign(
+    { id: user.id, role: user.role },
+    process.env.JWT_REFRESH_TOKEN_SECRET_KEY,
+    { expiresIn: eval(process.env.JWT_REFRESH_EXP_TIME) }
+  );
+  user.refreshToken = refreshToken;
+  await user.save();
+
+  let options = {
+    maxAge: eval(process.env.JWT_REFRESH_EXP_TIME),
+    httpOnly: false,
+  };
+
+  res.cookie("jwt", refreshToken, options);
+  let userObj = user.toObject();
+
+  delete userObj.password;
+  delete userObj.refreshToken;
+
+  resposcha(res, 200, { userObj, token });
 });
