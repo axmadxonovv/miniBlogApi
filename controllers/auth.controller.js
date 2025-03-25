@@ -35,20 +35,9 @@ let login = errorHandler(async (req, res, next) => {
     .exec();
   if (!user) throw new Error("Siz oldin ro'yxat o'tmagansiz ");
 
-  console.log(req.body);
-
   let checking = await bcrypt.compare(password, user.password);
   if (!checking) throw new Error("password xato kiritilgan berilmagan");
-  console.log(user.password, checking);
   user.password = password;
-  let token = await jwt.sign(
-    { id: user.id, role: user.role },
-    process.env.JWT_TOKEN_SECRET_KEY,
-    { expiresIn: process.env.JWT_EXP_TIME }
-  );
-
-  console.log(eval(process.env.JWT_REFRESH_EXP_TIME));
-
   let refreshToken = await jwt.sign(
     { id: user.id, role: user.role },
     process.env.JWT_REFRESH_TOKEN_SECRET_KEY,
@@ -68,7 +57,47 @@ let login = errorHandler(async (req, res, next) => {
   delete userObj.password;
   delete userObj.refreshToken;
 
-  sendResponse(res, 200, { userObj, token });
+  sendResponse(res, 200, { userObj });
+});
+let generateAccesToken = errorHandler(async (req, res, next) => {
+  let token = req.cookies.jwt;
+
+  let checking = jwt.verify(token, process.env.JWT_REFRESH_TOKEN_SECRET_KEY);
+
+  let user = await User.findOne({ refreshToken: token });
+  if (!user || user.id !== checking.id) {
+    throw new Error("bunday user mavjud emas");
+  }
+
+  let accesToken = await jwt.sign(
+    { id: user.id, role: user.role },
+    process.env.JWT_TOKEN_SECRET_KEY,
+    { expiresIn: process.env.JWT_EXP_TIME }
+  );
+
+  sendResponse(res, 200, { token: accesToken });
+});
+let getProfile = errorHandler(async (req, res, next) => {
+  let user = req.user;
+
+  user = await User.findOne({ _id: user.id });
+
+  res.status(200).json({ user });
 });
 
-module.exports = { registerUser, login };
+let logOut = errorHandler(async (req, res, next) => {
+  let options = {
+    maxAge: eval(process.env.JWT_REFRESH_EXP_TIME),
+    httpOnly: false,
+  };
+  res.clearCookie("jwt", options);
+  sendResponse(res, 200, "loged out");
+});
+
+module.exports = {
+  registerUser,
+  login,
+  generateAccesToken,
+  getProfile,
+  logOut,
+};

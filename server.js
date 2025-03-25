@@ -1,5 +1,6 @@
 const express = require("express");
 const app = express();
+let errController = require("./controllers/error.controller");
 const mongana = require("morgan");
 let authRouter = require("./routes/auth.route");
 const connectDb = require("./config/db");
