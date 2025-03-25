@@ -1,12 +1,17 @@
 const express = require("express");
 const app = express();
 const mongana = require("morgan");
+let authRouter = require("./routes/auth.route");
 const connectDb = require("./config/db");
 const env = require("dotenv").config();
+let cookieParser = require("cookie-parser");
 connectDb();
+app.use(cookieParser());
 app.use(express.json());
 app.use(mongana("dev"));
 app.use(express.urlencoded({ extends: true }));
+app.use(errController);
+app.use("/auth", authRouter);
 
 process.on("unhandledRejection", (err) => {
   console.log("UNHANDLED REJECTION 💥");

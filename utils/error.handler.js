@@ -1,4 +1,4 @@
-const resposcha = require("./resposcha.js");
+const resposcha = require("./respons");
 
 let errorHandler = (func) => {
   return (req, res, next) => {

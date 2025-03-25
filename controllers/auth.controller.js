@@ -68,5 +68,7 @@ let login = errorHandler(async (req, res, next) => {
   delete userObj.password;
   delete userObj.refreshToken;
 
-  resposcha(res, 200, { userObj, token });
+  sendResponse(res, 200, { userObj, token });
 });
+
+module.exports = { registerUser, login };
