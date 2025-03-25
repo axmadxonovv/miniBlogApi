@@ -20,7 +20,8 @@ let updatePost = errorHandler(async (req, res, next) => {
 });
 
 let deletePost = errorHandler(async (req, res, next) => {
-  PostModel.findByIdAndDelete(req.params.id);
+  let id = req.params.id;
+  await PostModel.findByIdAndDelete(id);
   res.status(204).send({ Post: "dsds" });
 });
 let getById = errorHandler(async (req, res, next) => {
