@@ -1,33 +1,43 @@
-const ToursModel = require("../models/tour.model");
+const PostModel = require("../models/post.model");
 const errorHandler = require("../utils/error.handler");
-const resposcha = require("../utils/resposcha");
+const sendResponse = require("../utils/respons");
 
-let getTours = errorHandler(async (req, res, next) => {
-  let Tours = await ToursModel.find().populate({
-    path: "guides",
-    select: "name",
-  });
-
-  resposcha(res, 200, Tours);
+let getPost = errorHandler(async (req, res, next) => {
+  id = req.params.id;
+  let Post = await PostModel.findById(id);
+  sendResponse(res, 200, Post);
 });
-let addTour = errorHandler(async (req, res, next) => {
-  console.log(req.user);
-
-  let Tour = await ToursModel.create({
-    ...req.body,
-    guides: [req.user.id, ...req.body.guides],
-  });
-  resposcha(res, 201, Tour);
+let addPost = errorHandler(async (req, res, next) => {
+  let data = req.body;
+  let Post = await PostModel.create(data);
+  sendResponse(res, 201, Post);
+});
+let updatePost = errorHandler(async (req, res, next) => {
+  let id = req.params.id;
+  let data = req.body;
+  let book = await PostModel.findByIdAndUpdate(id, data, { new: true });
+  sendResponse(res, 203, book);
 });
 
-let deleteTour = errorHandler(async (req, res, next) => {
-  res.status(204).send({ Tours: "dsds" });
+let deletePost = errorHandler(async (req, res, next) => {
+  PostModel.findByIdAndDelete(req.params.id);
+  res.status(204).send({ Post: "dsds" });
 });
 let getById = errorHandler(async (req, res, next) => {
-  let Tour = await ToursModel.findById(req.params.id).populate("comments");
-  if (!Tour) throw new Error("Tour topilmadi ");
-  console.log(req.params.id, "iddddd");
+  let Post = await PostModel.findById(req.params.id);
+  if (!Post) throw new Error("Tour topilmadi ");
   res.status(200).send({ Tour });
 });
+let getAllPost = errorHandler(async (req, res, next) => {
+  let Post = await PostModel.find();
+  sendResponse(res, 200, Post);
+});
 
-module.exports = { getTours, addTour, deleteTour, getById };
+module.exports = {
+  getPost,
+  addPost,
+  deletePost,
+  getById,
+  getAllPost,
+  updatePost,
+};
