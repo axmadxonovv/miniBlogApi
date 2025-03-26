@@ -12,7 +12,7 @@ connectDb();
 app.use(cookieParser());
 app.use(express.json());
 app.use(mongana("dev"));
-app.use(express.urlencoded({ extends: true }));
+app.use(express.urlencoded({ extended: true }));
 app.use(errController);
 app.use("/auth", authRouter);
 app.use("/posts", postRouter);
